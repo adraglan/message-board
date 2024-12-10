@@ -5,7 +5,7 @@ export default function Page() {
         <>
             <Editor/>
             <button type="button">Send!</button>
-            <div>Messages</div>
+            <div>placeholdertext</div>
         </>
     )
   }
