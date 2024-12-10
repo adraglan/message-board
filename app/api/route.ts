@@ -3,8 +3,8 @@ import pool from '../../db'
 // $ curl -X POST http://localhost:3000/api 
 // -H "Content-Type: application/json" 
 // -d '{"test": "This is a test string"}'
-export async function POST(request: Request) {
-    const message = await request.json()
+export async function POST(req: Request) {
+    const message = await req.json()
     return new Response(JSON.stringify({ message }), {
         headers: {
             'Content-Type': 'application/json',
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
 // $ curl -X GET http://localhost:3000/api 
 // -H "Content-Type: application/json" 
-export async function GET(req: Request, res: Response) {
+export async function GET() {
     try {
         const result = await pool.query('SELECT * FROM messages')
         return result.rows
