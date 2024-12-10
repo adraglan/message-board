@@ -26,7 +26,7 @@ const initialValue: Descendant[] = [
     },
   ]
 
-export const Editor = () => {
+const Editor = () => {
     const [editor] = useState(() => withReact(createEditor()))
     return (
         <Slate editor={editor} initialValue={initialValue}>
@@ -34,3 +34,5 @@ export const Editor = () => {
         </Slate>
     )
 }
+
+export default Editor
