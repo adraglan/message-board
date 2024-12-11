@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react'
-import { BaseEditor, Descendant, createEditor, Editor, Element, Transforms } from 'slate'
+import { BaseEditor, Descendant, createEditor, Editor, Element, Transforms, Point} from 'slate'
 import withEmbeds from '../app/utils/withEmbeds'
 import YouTubeElement from './YoutubeElement'
 
@@ -38,14 +38,25 @@ const CustomEditor = {
     embedRegexes.some(({regex, type}) => {
       const match = text.match(regex)
       if (match) {
-        console.log('match', type, match[1])
         event.preventDefault()
 
-        const url = text
+        // embed element
         Transforms.insertNodes(editor, {
           children: [{text}],
           type,
           youtubeId: match[1],
+        })
+
+        // insert new paragraph after embed to continue typing
+        Transforms.insertNodes(editor, {
+          children: [{text: ''}],
+          type: 'paragraph'
+        })
+
+        // Move to next line
+        Transforms.move(editor, {
+          distance: 1,
+          unit: 'line',
         })
         return true
       }
@@ -56,7 +67,6 @@ const CustomEditor = {
 
   handlePaste(editor, event) {
     CustomEditor.handleEmbed(editor, event)
-    console.log('onPaste', event.clipboardData.getData('text/plain'))
   },
 
   isBoldMarkActive(editor) {
@@ -228,6 +238,22 @@ const NewMessage = () => {
         }}
         onKeyDown={(event) => {
           if (!event.ctrlKey) {
+            if (event.key === 'Backspace') {
+              const { selection } = editor;
+
+              // Ensure there's a selection and it's collapsed (caret only, no range)
+              if (selection) {
+                const [nodeEntry] = Editor.nodes(editor, {
+                  at: selection,
+                  match: (node) => node.type === 'youtube',
+                });
+
+                if (nodeEntry) {
+              event.preventDefault();
+                  Transforms.removeNodes(editor, { at: selection });
+                }
+              }
+            }
             return
           }
 
