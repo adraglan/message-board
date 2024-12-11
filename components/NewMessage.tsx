@@ -3,6 +3,8 @@
 import React, { useState, useCallback } from 'react'
 import { Slate, Editable, withReact, ReactEditor } from 'slate-react'
 import { BaseEditor, Descendant, createEditor, Editor, Element, Transforms } from 'slate'
+import withEmbeds from '../app/utils/withEmbeds'
+import YouTubeElement from './YoutubeElement'
 
 type CustomElement = { type: 'paragraph'; children: CustomText[] }
 type CustomText = { text: string }
@@ -15,14 +17,48 @@ declare module 'slate' {
   }
 }
 
-const initialValue: Descendant[] = [
+const initialValue= [
     {
       type: 'paragraph',
       children: [{ text: 'Placeholder' }],
     },
   ]
+        
+const embedRegexes = [
+  {
+    regex: /http(?:s?):\/\/(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-\_]*)(&(amp;)?‌​[\w\?‌​=]*)?/,
+    type: 'youtube'
+  }
+]
 
 const CustomEditor = {
+  handleEmbed(editor, event) {
+    const text = event.clipboardData.getData('text/plain')
+
+    embedRegexes.some(({regex, type}) => {
+      const match = text.match(regex)
+      if (match) {
+        console.log('match', type, match[1])
+        event.preventDefault()
+
+        const url = text
+        Transforms.insertNodes(editor, {
+          children: [{text}],
+          type,
+          youtubeId: match[1],
+        })
+        return true
+      }
+
+      return false
+    })
+  },
+
+  handlePaste(editor, event) {
+    CustomEditor.handleEmbed(editor, event)
+    console.log('onPaste', event.clipboardData.getData('text/plain'))
+  },
+
   isBoldMarkActive(editor) {
     const marks = Editor.marks(editor)
     return marks ? marks.bold === true : false
@@ -61,6 +97,10 @@ const CodeElement = props => (
   </pre>
 )
 
+const CustomImage = props => (
+  <img {...props.attributes} src={props.element.url} alt="img"/>
+)
+
 const DefaultElement = props => (
   <p {...props.attributes}>{props.children}</p>
 )
@@ -74,12 +114,16 @@ const Leaf = props => (
 )
 
 const NewMessage = () => {
-    const [editor] = useState(() => withReact(createEditor()))
+    const [editor] = useState(() => withEmbeds(withReact(createEditor())))
 
     const renderElement = useCallback((props) => {
       switch (props.element.type) {
         case 'code': 
           return <CodeElement {...props}/>
+        case 'image':
+          return <CustomImage {...props}/>
+        case 'youtube':
+          return <YouTubeElement {...props}/>
         default:
           return <DefaultElement {...props}/>
       }
@@ -115,9 +159,57 @@ const NewMessage = () => {
           <button type="button"
           onMouseDown={(event) => {
             event.preventDefault()
-            CustomEditor.toggleCodeBlock(editor)
+            CustomEditor.toggleItalic(editor)
           }}>
-            Code Block
+            Italic
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleLink(editor)
+          }}>
+            Link
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleNumberedList(editor)
+          }}>
+            Numbered List
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleBullets(editor)
+          }}>
+            Bullet 
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleH1(editor)
+          }}>
+            H1
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleH2(editor)
+          }}>
+            H2
+          </button>
+
+          <button type="button"
+          onMouseDown={(event) => {
+            event.preventDefault()
+            CustomEditor.toggleImage(editor)
+          }}>
+            Image
           </button>
 
           <button type="button"
@@ -153,6 +245,9 @@ const NewMessage = () => {
               break
             }
           }
+        }}
+        onPaste={(event) => {
+          CustomEditor.handlePaste(editor, event)
         }}
         renderElement={renderElement}
         renderLeaf={renderLeaf}/>
