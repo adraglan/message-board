@@ -7,18 +7,18 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: development
-    develop:
-      watch:
-        - action: sync
-          path: ./
-          target: /app
-          ignore:
-            - node_modules/
-        - action: rebuild
-          path: package.json
+      CHOKIDAR_USEPOLLING: true # Ensures file changes are detected in Docker
+      DB_HOST: db        # Pass the db service name as an environment variable
+    volumes:
+      - .:/app:delegated         # Mount the current directory to the container
+      - /app/node_modules        # Ensure node_modules remains in the container
+    working_dir: /app            # Set the working directory inside the container
+    command: npm run dev         # Start the development server
+
   db:
     image: postgres:latest
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: db-1
     ports:

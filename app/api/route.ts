@@ -18,7 +18,12 @@ export async function POST(req: Request) {
 export async function GET() {
     try {
         const result = await pool.query('SELECT * FROM messages')
-        return result.rows
+        return new Response(JSON.stringify(result.rows), {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            status: 200, 
+        });
     } catch (error) {
         console.error("Error during query: ", error)
         return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
